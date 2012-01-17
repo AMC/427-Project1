@@ -46,6 +46,7 @@ class FrameDesc implements GlobalConst{
 
 
 
+
 /** A buffer HASTABLE ENTRY description class. It describes 
  * each entry for the buffer hash table, the page number and 
  * frame number for that page, the pointer points to the next
@@ -311,8 +312,6 @@ public class BufMgr implements GlobalConst{
 		}
 	} 
 }
-
-
 
 // A class describes the victim frames data, its frame number and page number.
 class victim_data {
