@@ -1,5 +1,5 @@
-JDKPATH = /s/java
-LIBPATH = /p/course/cs784-raghu/minibase_share/javaminibase/javamini_hwk/assign/BufMgr/lib/bufmgrAssign.jar
+JDKPATH = /usr/
+LIBPATH = /home/jennifer/CSCD427/427-Project1/files/lib/bufmgrAssign.jar
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)

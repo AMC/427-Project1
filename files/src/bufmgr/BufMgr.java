@@ -24,6 +24,10 @@ class FrameDesc implements GlobalConst{
 
 	//Creates a FrameDesc object, initialize pageNo, dirty and pin_count.
 	public FrameDesc() {
+		pageNo = new PageId();
+		dirty = false;
+		pin_cnt = 0; 			//initialized to none pinned
+		pageNo.pid = INVALID_PAGE;  	//since the frame is empty (as specified above)
 
 	}
 
@@ -80,18 +84,33 @@ class BufHashTbl implements GlobalConst{
 	//Returns the number of hash bucket used, value between 0 and hash table size-1
 	private int hash(PageId pageNo) {
 		//return the bucket number in the hash table
-		//TODO: Hash the pageNo and return the value
-		return 0;
+		//Dan Li mentioned in lecture an acceptable hash function is the page id mod hash table size
+		return (pageNo.pid % HTSIZE);
 	}
 
 	// Creates a buffer hash table object.
 	public BufHashTbl(){
-
+		//for each slot of the linked list BufTHEntry, intialize its value in preparation of hashing to come
+		for(int i = 0; i < HTSIZE; i++){
+			ht[i] = null;
+		}
 	}
 
 	//Insert association between page pageNo and frame frameNo into the hash table.
 	public boolean insert(PageId pageNo, int frameNo) {
-		//return success or failure
+		BufHTEntry bhtEntry = new BufHTEntry();
+
+		//give the data to insert to the new bhtEntry
+		bhtEntry.pageNo.pid = pageNo.pid;
+		bhtEntry.frameNo = frameNo;
+
+		//insert the page into the buffer hash table
+		bhtEntry.next = ht[hash(pageNo)];
+
+		//set the linked list slot to point to the entry
+		ht[hash(pageNo)] = bhtEntry;
+
+		//return success
 		return true;
 	}
 
@@ -133,8 +152,9 @@ class BufHashTbl implements GlobalConst{
 
 
 
-// A clock algorithm for buffer pool replacement policy. 
-// It picks up the frame in the buffer pool to be replaced. 
+/** A clock algorithm for buffer pool replacement policy. 
+ * It picks up the frame in the buffer pool to be replaced. 
+ */
 class Clock extends Replacer {
 
 	// Creates a clock object
@@ -241,81 +261,104 @@ public class BufMgr implements GlobalConst{
 	PageNotReadException,BufferPoolExceededException, PagePinnedException, 
 	PageUnpinnedException, HashEntryNotFoundException, BufMgrException,
 	DiskMgrException,IOException{
-		// This routine will call DB to deallocate the page.
+		// Call DB to deallocate the page.
 	}
 
 	// Factor out the common code for the two versions of Flush 
-	// pageid  is the page number of the page which needs to be flushed.
+	// pageid is the page number of the page which needs to be flushed.
 	// all_pages is the total number of page to be flushed.
 	private void privFlushPages(PageId pageid, int all_pages) throws HashOperationException, 
 	PageUnpinnedException,PagePinnedException, PageNotFoundException,
 	BufMgrException,IOException{
 
-	}  
+		//keep track of pages unpinned for exception handling
+		int numUnpinnedPages = 0;
 
-	// Added to flush a particular page of the buffer pool to disk.
-	// pageid the page number in the database. 
-	public void flushPage(PageId pageid) throws HashOperationException, 
-	PageUnpinnedException,PagePinnedException,PageNotFoundException,
-	BufMgrException,IOException {
-		privFlushPages(pageid, 0);	
+//		//before flushing, decide if which pages are dirty and need writing
+//		for(int i = 0; i < numBuffers; i++){
+//			if((all_pages == 1) || (pageid.pid == frmeTable[i].pageNo.pid)){
+//
+//				if(frmeTable[i].dirty){		  
+//					//create a page to write to the hard drive
+//					Page pageToWrite = new Page(bufPool[i]);
+//					//write the page 
+//					write_page(pageid,pageToWrite);
+//					//remove the page from the buffer pool
+//					hashTable.remove(pageid);
+//					//set the frame location as empty
+//					frmeTable[i].pageNo.pid = INVALID_PAGE;
+//					//its clean!
+//					frmeTable[i].dirty = false;
+//				}
+//			}
+//		}  
 	}
 
-	// Flushes all pages of the buffer pool to disk 
-	public void flushAllPages() throws HashOperationException, 
-	PageUnpinnedException,PagePinnedException,PageNotFoundException,
-	BufMgrException,IOException {
-
-	}
-
-	// Gets the total number of buffers.
-	public int getNumBuffers(){
-		return numBuffers;
-	}
-
-	// Gets the total number of unpinned buffer frames.
-	public int getNumUnpinnedBuffers(){
-		//TODO: Find the number of unpinned buffer frames
-		return 0;
-	}
-
-	// A few routines currently need direct access to the FrameTable.
-	public   FrameDesc[] frameTable() { return frmeTable; }
-
-	// Try to write the page
-	private void write_page (PageId pageno, Page page)throws BufMgrException {
-		try {SystemDefs.JavabaseDB.write_page(pageno, page);}
-		catch (Exception e) {
-			throw new BufMgrException(e,"BufMgr.java: write_page() failed");
+		// Added to flush a particular page of the buffer pool to disk.
+		// pageid the page number in the database. 
+		public void flushPage(PageId pageid) throws HashOperationException, 
+		PageUnpinnedException,PagePinnedException,PageNotFoundException,
+		BufMgrException,IOException {
+			privFlushPages(pageid, 0);	//use 0 to signify false on all_pages parameter
 		}
-	} 
 
-	private void read_page (PageId pageno, Page page)throws BufMgrException {        
-		try {SystemDefs.JavabaseDB.read_page(pageno, page);}
-		catch (Exception e) {
-			throw new BufMgrException(e,"BufMgr.java: read_page() failed");
-		}   
-	}  
+		// Flushes all pages of the buffer pool to disk 
+		public void flushAllPages() throws HashOperationException, 
+		PageUnpinnedException,PagePinnedException,PageNotFoundException,
+		BufMgrException,IOException {
+			//Flushing all pages is equivent to using the intial settings
+			PageId pageId = new PageId(INVALID_PAGE);
+			privFlushPages(pageId,1);		//use 1 to signify true on all_pages parameter
+		}
 
-	private void allocate_page (PageId pageno, int num)throws BufMgrException {      
-		try {SystemDefs.JavabaseDB.allocate_page(pageno, num);}
-		catch (Exception e) {
-			throw new BufMgrException(e,"BufMgr.java: allocate_page() failed");
+		// Gets the total number of buffers.
+		public int getNumBuffers(){
+			return numBuffers;
+		}
+
+		// Gets the total number of unpinned buffer frames.
+		public int getNumUnpinnedBuffers(){
+			//TODO: get the number of unpinned buffers
+			return 0;
+		}
+
+		// A few routines currently need direct access to the FrameTable.
+		public   FrameDesc[] frameTable() { return frmeTable; }
+
+		// Try to write the page
+		private void write_page (PageId pageno, Page page)throws BufMgrException {
+			try {SystemDefs.JavabaseDB.write_page(pageno, page);}
+			catch (Exception e) {
+				throw new BufMgrException(e,"BufMgr.java: write_page() failed");
+			}
 		} 
-	} 
 
-	private void deallocate_page (PageId pageno)throws BufMgrException {
-		try {SystemDefs.JavabaseDB.deallocate_page(pageno);}
-		catch (Exception e) {
-			throw new BufMgrException(e,"BufMgr.java: deallocate_page() failed");
-		}
-	} 
-}
+		private void read_page (PageId pageno, Page page)throws BufMgrException {        
+			try {SystemDefs.JavabaseDB.read_page(pageno, page);}
+			catch (Exception e) {
+				throw new BufMgrException(e,"BufMgr.java: read_page() failed");
+			}   
+		}  
+
+		private void allocate_page (PageId pageno, int num)throws BufMgrException {      
+			try {SystemDefs.JavabaseDB.allocate_page(pageno, num);}
+			catch (Exception e) {
+				throw new BufMgrException(e,"BufMgr.java: allocate_page() failed");
+			} 
+		} 
+
+		private void deallocate_page (PageId pageno)throws BufMgrException {
+			try {SystemDefs.JavabaseDB.deallocate_page(pageno);}
+			catch (Exception e) {
+				throw new BufMgrException(e,"BufMgr.java: deallocate_page() failed");
+			}
+		} 
+	}
 
 
 
-// A class describes the victim frames data, its frame number and page number.
-class victim_data {
-	public int frame_num;
-	public int page_id;
-}
+	// A class describes the victim frames data, its frame number and page number.
+	class victim_data {
+		public int frame_num;
+		public int page_id;
+	}
