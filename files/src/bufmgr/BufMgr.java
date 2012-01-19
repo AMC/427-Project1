@@ -2,8 +2,7 @@ package bufmgr;
 import java.io.*;
 import java.util.*;
 import diskmgr.*;
-import global.*;
-
+import global.*
 
 
 /** A frame description class. It describes each page in the buffer
