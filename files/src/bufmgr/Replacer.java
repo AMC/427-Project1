@@ -1,15 +1,12 @@
 package bufmgr;
 
-public class Replacer {
+abstract class Replacer {
 	
 	//the replacement policy is
-	public static final String Clock = "Clock";
+	String policy = "Clock";
 
 	public Replacer(BufMgr javamgr) {
 
 	}
 
-	public Replacer(String replacerArg) {
-		
-	}
 }

@@ -97,18 +97,19 @@ class BufHashTbl implements GlobalConst{
 	}
 
 	//Insert association between page pageNo and frame frameNo into the hash table.
+	//TODO: Is this the way we want to insert?
 	public boolean insert(PageId pageNo, int frameNo) {
 		BufHTEntry bhtEntry = new BufHTEntry();
 
 		//give the data to insert to the new bhtEntry
 		bhtEntry.pageNo.pid = pageNo.pid;
 		bhtEntry.frameNo = frameNo;
+		
+		//place the entry in the array
+		ht[hash(pageNo)] = bhtEntry;
 
 		//insert the page into the buffer hash table
 		bhtEntry.next = ht[hash(pageNo)];
-
-		//set the linked list slot to point to the entry
-		ht[hash(pageNo)] = bhtEntry;
 
 		//return success
 		return true;
@@ -116,15 +117,50 @@ class BufHashTbl implements GlobalConst{
 
 	//Find a page in the hashtable, return INVALID_PAGE on failure, otherwise the frame number.
 	public int lookup(PageId pageNo){
-		//TODO: Retrieve value from hash table and return the frame number found
-		return 0;
+	      
+	      BufHTEntry entryToFind = ht[hash(pageNo)];
+	      
+	      while(entryToFind != null) {
+	    	  if (entryToFind.pageNo.pid == pageNo.pid) {
+	    		  return(entryToFind.frameNo);
+	    	  }
+	    	  entryToFind = entryToFind.next;
+	      }
+	      
+	      return INVALID_PAGE;
+	      
 	}
 
 	// Remove the page from the hashtable.
 	public boolean remove(PageId pageNo) {
-		//TODO: Remove the page from the hashtable
-		//return success or failure
-		return true;
+
+	      //hash the page number to find the entry we want to remove
+	      int i = hash(pageNo);
+	     
+	      //determine initial cur and prev
+	      BufHTEntry cur = ht[i];
+	      BufHTEntry prev = null;
+	      
+	      while (cur != null) {	
+	    	  if (cur.pageNo.pid == pageNo.pid){
+	    		  //then stop looking we have found it
+	    		  break;
+	    	  }
+	    	  //update prev and make cur next in line
+	    	  prev = cur;
+	    	  cur = cur.next;
+	      }
+	      
+	      //unlink the found page so that it is "removed"
+		  prev.next = cur.next;
+		
+	      if(pageNo.pid != ht[i].pageNo.pid){
+	        System.err.println ("ERROR: The page " + pageNo.pid + " was not found in the hashtable.\n");       
+	        return false;
+	      }
+	      
+	      //return success of removal
+	      return true;
 	}
 
 	// Show the hashtable contents.
@@ -210,13 +246,20 @@ public class BufMgr implements GlobalConst{
 	private Replacer replacer;
 
 	//Constructor. Create a buffer manager object. 
-	//CONSIDER TODO: Should this throw an exception to handle an invalid replacer arg?
 	public BufMgr( int numbufs, String replacerArg ){
-		//number of buffers in the pool
+		
+		//intialize the needed variables
 		numBuffers = numbufs;
+		bufPool = new byte[numBuffers][MAX_SPACE];
+		frmeTable = new FrameDesc[numBuffers];
+	    
+		//setup the frmeTable
+		for (int i=0; i<numBuffers; i++){  
+			frmeTable[i] = new FrameDesc();
+		}
 
-		//set the replacement policy to be what is passed in
-		replacer = new Replacer(replacerArg);
+		//set the replacement policy
+		replacer = new Clock(this);
 	}
 
 	// Debug use only   
@@ -230,15 +273,17 @@ public class BufMgr implements GlobalConst{
 		// Check if this page is in buffer pool, otherwise
 		// find a frame for this page, read in and pin it.
 		// Also write out the old page if it's dirty before reading
-		// if emptyPage==TRUE, then actually no read is done to bring the page in.	  
+		// if emptyPage==TRUE, then actually no read is done to bring the page in.	
+		
 	}
 
 	public void unpinPage(PageId PageId_in_a_DB, boolean dirty) throws ReplacerException, 
 	PageUnpinnedException,HashEntryNotFoundException,InvalidFrameNumberException{
 		// To unpin a page specified by a pageId.
-		// If pincount>0, decrement it and if it becomes zero and 
+		// If pincount>0, decrement it and if it becomes zero
 		// put it in a group of replacement candidates.
 		// If pincount=0 before this call, return error.
+
 	}
 
 	public PageId newPage(Page firstpage, int howmany) throws BufferPoolExceededException, 
@@ -250,9 +295,24 @@ public class BufMgr implements GlobalConst{
 		// and pin it. If buffer is full, ask DB to deallocate 
 		// all these pages and return error (null if error).
 		//Note: howmany refers to the total number of allocated new pages
-		//Generic solution to compile below
-		PageId pi = new PageId();
-		return pi;
+
+	     PageId pageid = new PageId();
+
+	     //find space for the page
+	     allocate_page(pageid,howmany);
+	     
+	     //try to pin the page
+	     try{pinPage(pageid,firstpage,true);}
+	     catch (Exception e) {
+	       //the buffer must be full, so deallocaate and return null for error
+	       for (int i=0; i < howmany; i++){ 
+	    	   	pageid.pid  = pageid.pid + i;
+	    	   	deallocate_page(pageid);
+	       }
+	       return  null;
+	    }   
+	     //return success
+	     return pageid;
 	}
 
 	// User should call this method if she needs to delete a page.
@@ -261,7 +321,16 @@ public class BufMgr implements GlobalConst{
 	PageNotReadException,BufferPoolExceededException, PagePinnedException, 
 	PageUnpinnedException, HashEntryNotFoundException, BufMgrException,
 	DiskMgrException,IOException{
-		// Call DB to deallocate the page.
+	      
+		int frameNo = hashTable.lookup(globalPageId); 
+
+		//set the page id to empty
+	    frmeTable[frameNo].pageNo.pid = INVALID_PAGE;
+	    
+	    //this page is now clean and clear
+	    frmeTable[frameNo].dirty = false;
+
+	    deallocate_page(globalPageId);
 	}
 
 	// Factor out the common code for the two versions of Flush 
