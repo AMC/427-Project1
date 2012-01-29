@@ -1,5 +1,5 @@
-JDKPATH = /usr/
-LIBPATH = /home/jennifer/CSCD427/427-Project1/files/lib/bufmgrAssign.jar
+JDKPATH = /usr
+LIBPATH = /Volumes/Data/Dropbox/'CSCD 427'/427-Project1/files/lib/bufmgrAssign.jar
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
