@@ -1,5 +1,14 @@
-I was here.
-
-I was here the whole time. Hiding.
-
-Boo!
+files/ 
+  lib/              Library files used b the buffer manager
+  src/              Source File
+    bufmgr/           Includes BufMgr and auxiliary classes
+      BufMgr.java       *** Edit this file to implement Buffer Manager
+      Replacer.java     Replaced file provided by Dan Li
+    diskmgr/          Source code for the disk space manager used in lib/
+    tests/            Includes tester and makefile for execution
+      BMTest.java       tester file for the Buffer Manager
+      Makefile          Update the JDKPATH and LIBPATH
+                          Make BMTest  // Compile Tester
+                          Make bmtest  // Run Tester
+      TestDriver.java   base class for tester files
+      
