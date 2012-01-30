@@ -15,9 +15,6 @@ import global.*;
   }
 
 
-
-
-
 /** A super class for buffer pool replacement algorithm. It describes
  * which frame to be picked up for replacement by a certain replace
  * algorithm.

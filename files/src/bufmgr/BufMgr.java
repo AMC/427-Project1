@@ -29,9 +29,17 @@ class FrameDesc implements GlobalConst{
   /** Creates a FrameDesc object, initialize pageNo, dirty and 
    * pin_count.
    */
+   
   public FrameDesc() 
   {
+    this.pageNo = new PageId();
+    this.dirty = false;
     
+    // initialized to 0 as nothing is pinned
+    this.pin_cnt = 0;
+    
+    // initialized to INVALID_PAGE since the frame is empty as specified above
+    this.pageNo.pid = INVALID_PAGE; 
   }
   
   
@@ -42,7 +50,7 @@ class FrameDesc implements GlobalConst{
    */
   public int pin_count() 
   {  
-  
+    return this.pin_cnt;
   }
   
   /** Increments the pin count of a certain frame page when the
@@ -52,7 +60,8 @@ class FrameDesc implements GlobalConst{
    */
   public int pin() 
   {  
-  
+    this.pin_cnt++;
+    return this.pin_count();
   }
   
   /** Decrements the pin count of a frame when the page is 
@@ -62,7 +71,10 @@ class FrameDesc implements GlobalConst{
    * @return the decremented pin count.
    */
   public int unpin() {
-
+    if (this.pin_cnt > 0)
+      this.pin_cnt--;
+    
+    return this.pin_count();
   }
 }
 
@@ -89,12 +101,13 @@ class BufHTEntry {
 // *****************************************************
 
 /** A buffer hashtable to keep track of pages in the buffer pool. 
- * It inserts, retrieves and removes pages from the h ash table. 
+ * It inserts, retrieves and removes pages from the hash table. 
  */
 class BufHashTbl implements GlobalConst{
   
   
   /** Hash Table size, small number for debugging. */
+  // Primary numbers provide a better hash
   private static final int HTSIZE = 20;   
   
   
@@ -111,14 +124,18 @@ class BufHashTbl implements GlobalConst{
    */
   private int hash(PageId pageNo) 
     {
-
+      // Hash function below is acceptable hash method per lecture
+      return (pageNo.pid % HTSIZE);
     }
   
   /** Creates a buffer hash table object. */
+  // Constructor
   public BufHashTbl()
    {
-
-    }
+     // Initialize the hash table with null values
+     for (int i = 0; i < HTSIZE: i++)
+       this.ht[i] = null;
+   }
   
   
   /** Insert association between page pageNo and frame frameNo 
@@ -129,9 +146,11 @@ class BufHashTbl implements GlobalConst{
    * @return true if successful.
    */
   public boolean insert(PageId pageNo, int frameNo) 
-   {
-
-    }
+  {
+     BufHTEntry bhtEntry = new BufHTEntry();
+     
+     
+  }
   
   
   /** Find a page in the hashtable, return INVALID_PAGE
