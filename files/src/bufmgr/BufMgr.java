@@ -2,7 +2,7 @@ package bufmgr;
 import java.io.*;
 import java.util.*;
 import diskmgr.*;
-import global.*
+import global.*;
 
 
 /** A frame description class. It describes each page in the buffer
@@ -15,18 +15,18 @@ class FrameDesc implements GlobalConst{
 	// The page within file, or INVALID_PAGE if the frame is empty. 
 	public PageId pageNo;     
 
-	// the dirty bit, 1 (TRUE) stands for this frame is altered, else 0 (FALSE) for clean frames.
+	// The dirty bit, 1 (TRUE) stands for this frame is altered, else 0 (FALSE) for clean frames.
 	public boolean dirty;     
 
-	//The pin count for the page in this frame
+	// The pin count for the page in this frame
 	public int pin_cnt;   
 
 	//Creates a FrameDesc object, initialize pageNo, dirty and pin_count.
 	public FrameDesc() {
 		pageNo = new PageId();
 		dirty = false;
-		pin_cnt = 0; 			//initialized to none pinned
-		pageNo.pid = INVALID_PAGE;  	//since the frame is empty (as specified above)
+		pin_cnt = 0; 			            // initialized to none pinned
+		pageNo.pid = INVALID_PAGE;  	// since the frame is empty (as specified above)
 
 	}
 
@@ -37,7 +37,7 @@ class FrameDesc implements GlobalConst{
 
 	// Increments the pin count of a certain frame page when the page is pinned.
 	public int pin() {  
-		return pin_cnt++;
+		return (pin_cnt++);
 	}
 
 	//Decrements the pin count of a frame when the page is unpinned. Not less than 0!
@@ -49,7 +49,7 @@ class FrameDesc implements GlobalConst{
 
 
 
-/** A buffer HASTABLE ENTRY description class. It describes 
+/** A buffer HASHTABLE ENTRY description class. It describes 
  * each entry for the buffer hash table, the page number and 
  * frame number for that page, the pointer points to the next
  * hash table entry.
@@ -80,7 +80,7 @@ class BufHashTbl implements GlobalConst{
 	// Each slot holds a linked list of BufHTEntrys, NULL means none
 	private BufHTEntry ht[] = new BufHTEntry[HTSIZE];       
 
-	//Returns the number of hash bucket used, value between 0 and hash table size-1
+	// Returns the number of hash bucket used, value between 0 and hash table size-1
 	private int hash(PageId pageNo) {
 		//return the bucket number in the hash table
 		//Dan Li mentioned in lecture an acceptable hash function is the page id mod hash table size
@@ -89,32 +89,41 @@ class BufHashTbl implements GlobalConst{
 
 	// Creates a buffer hash table object.
 	public BufHashTbl(){
-		//for each slot of the linked list BufTHEntry, intialize its value in preparation of hashing to come
+		// for each slot of the linked list BufTHEntry, intialize its value in preparation of hashing to come
 		for(int i = 0; i < HTSIZE; i++){
 			ht[i] = null;
 		}
 	}
 
-	//Insert association between page pageNo and frame frameNo into the hash table.
-	//TODO: Is this the way we want to insert?
+	// Insert association between page pageNo and frame frameNo into the hash table.
+	// DONE: ht is an array, entries are a linked list
+	//         to add an entry, check if that position already contains an entry
+	//         if so, follow the nexts to the end and add the new entry
 	public boolean insert(PageId pageNo, int frameNo) {
 		BufHTEntry bhtEntry = new BufHTEntry();
+		BufHTEntry bhtPrev;
 
-		//give the data to insert to the new bhtEntry
+		// give the data to insert to the new bhtEntry
 		bhtEntry.pageNo.pid = pageNo.pid;
 		bhtEntry.frameNo = frameNo;
 		
-		//place the entry in the array
-		ht[hash(pageNo)] = bhtEntry;
-
-		//insert the page into the buffer hash table
-		bhtEntry.next = ht[hash(pageNo)];
+		int position = hash(pageNo);
+    
+    if (ht[position] == null)               // Current bucket is empty
+      ht[position] = bhtEntry;
+    else {
+      bhtPrev = ht[position];               // Current bucket is not entry
+      while (bhtPrev.next != null)
+        bhtPrev.next = bhtPrev.next.next;   // Cycle to end of bucket
+      bhtPrev.next = bhtEntry;
+    }
 
 		//return success
 		return true;
 	}
 
-	//Find a page in the hashtable, return INVALID_PAGE on failure, otherwise the frame number.
+	// Find a page in the hashtable, return INVALID_PAGE on failure, otherwise the frame number.
+	// DONE: Cycle through entry linked list
 	public int lookup(PageId pageNo){
 	      
 	      BufHTEntry entryToFind = ht[hash(pageNo)];
@@ -197,9 +206,12 @@ class Clock extends Replacer {
 	public Clock(BufMgr javamgr){
 		super(javamgr);
 	}
+	
+	//TODO: constructor (String mgr);
 
 	// Picks up the frame to be replaced according to the clock algorithm.  
 	// Pin the frame so that other processes can not pick it.
+	// TODO: pick_victim
 	public int pick_victim() throws BufferPoolExceededException, PagePinnedException {
 
 		//return -1 if no frame is available. head of the list otherwise.	
@@ -210,9 +222,10 @@ class Clock extends Replacer {
 	public final String name() { return "Clock"; }
 
 	// Displays information from clock replacement algorithm. 
+	// DONE: display information from clock replacement
 	public void info()
 	{
-
+    super.info();
 	}
 
 } 
@@ -266,6 +279,7 @@ public class BufMgr implements GlobalConst{
 		hashTable.display();
 	}
 
+  // TODO: pinPage()
 	public void pinPage(PageId pin_pgid, Page page, boolean emptyPage) throws ReplacerException, 
 	HashOperationException, PageUnpinnedException, InvalidFrameNumberException, PageNotReadException, 
 	BufferPoolExceededException, PagePinnedException, BufMgrException,IOException { 
@@ -276,6 +290,7 @@ public class BufMgr implements GlobalConst{
 		
 	}
 
+  // TODO: unpinPage()
 	public void unpinPage(PageId PageId_in_a_DB, boolean dirty) throws ReplacerException, 
 	PageUnpinnedException,HashEntryNotFoundException,InvalidFrameNumberException{
 		// To unpin a page specified by a pageId.
@@ -335,6 +350,7 @@ public class BufMgr implements GlobalConst{
 	// Factor out the common code for the two versions of Flush 
 	// pageid is the page number of the page which needs to be flushed.
 	// all_pages is the total number of page to be flushed.
+	// TODO: privFlushPages()
 	private void privFlushPages(PageId pageid, int all_pages) throws HashOperationException, 
 	PageUnpinnedException,PagePinnedException, PageNotFoundException,
 	BufMgrException,IOException{
