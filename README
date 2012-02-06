@@ -3,7 +3,7 @@ files/
   src/              Source File
     bufmgr/           Includes BufMgr and auxiliary classes
       BufMgr.java       *** Edit this file to implement Buffer Manager
-      Replacer.java     Replaced file provided by Dan Li
+      Replacer.java     Replaced with the file provided by Dan Li
     diskmgr/          Source code for the disk space manager used in lib/
     tests/            Includes tester and makefile for execution
       BMTest.java       tester file for the Buffer Manager
