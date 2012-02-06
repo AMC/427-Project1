@@ -153,8 +153,11 @@ abstract class Replacer implements GlobalConst
     mgr = javamgr;
     int numbuf = javamgr.getNumBuffers();
     state_bit = new STATE[numbuf];
-    for(int i=0; i<numbuf; i++)
+    for(int i=0; i<numbuf; i++) {
     	state_bit[i] = new STATE();
+    	// Original code forget to set state
+      // state_bit[i].state = Available;
+    }
     head = -1;
   }
   

@@ -1,0 +1,107 @@
+FrameDesc :: GlobalConst
+  --------------------------
+  pageNo        : PageId
+  dirty         : boolean
+  pin_cnt       : int
+  --------------------------
+  FrameDesc()
+  pin_count()
+  pin()
+  unpin()
+  --------------------------
+  
+
+BufHTEntry
+  --------------------------
+  next          : BufHTEntry
+  pageNo        : PageId
+  frameNo       : int
+  --------------------------
+  --------------------------
+  
+
+BufHashTbl :: GlobalConst
+  --------------------------
+  HTSIZE        : int
+  BufHTEntry[]  : BufHTEntry
+  --------------------------
+  BufHashTbl()
+  hash()
+  insert(PageId pageNo, int frameNo)
+  lookup(PageId pageNo)
+  remove(PageId pageNo)
+  display()
+  --------------------------
+  
+
+STATE
+  --------------------------
+  state         : int
+  --------------------------
+  --------------------------
+  
+
+Replacer :: GlobalConst
+  --------------------------
+  head          : int
+  state_bit[]   : STATE
+  Available     : int 
+  Referenced    : int
+  Pinned        : int
+  --------------------------
+  Replacer(BufMgr javamgr)
+  pin(int frameNo)
+  unpin(int frameNo)
+  free(int frameNo)
+  pick_victim()
+  name();
+  info();
+  getNumUnpinnedBuffers()
+  setBufferManager(BufMgr mgrArg)
+  --------------------------
+
+
+Clock :: Replacer
+  --------------------------
+  --------------------------
+  Clock(BufMgr javamgr)
+  pick_victim()
+  name()
+  info()
+  --------------------------
+  
+  
+BufMgr :: GlobalConst
+  --------------------------
+  hashTable     : BufHashTbl
+  numBuffers    : int
+  bufPool       : byte[][]
+  frameTable    : FrameDesc
+  replacer      : Replacer
+  --------------------------
+  BugMgr(int numbufs, String replacerArg)
+  bmhashdisplay()
+  pinPage(PageId pin_pgid, Page page, boolean emptyPage)
+  unpinPage(PageI PageId_in_a_DB, boolean dirty)
+  newPage(Page firstpage, int howmany)
+  freePage(PageId globalPageId)
+  privFlushPages(PageId pageid, int all_pages)
+  flushPage(PageId pageid)
+  flushAllPages()
+  getNumBuffers()
+  getNumUnpinnedBuffers()
+  frameTable()
+  write_page(PageId pageno, Page page)
+  read_page(PageId pageno, Page page)
+  allocate_page(PageId pageno, int num)
+  deallocate_page(PageId pageno)
+  --------------------------
+  
+  
+victim_data
+  --------------------------
+  frame_num     : int
+  page_id       : int
+  --------------------------
+  --------------------------
+  
